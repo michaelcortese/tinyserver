@@ -5,5 +5,6 @@ no dependencies btw :)
 
 ## Todo
 - [ ] Multithreading
-- [ ] Routing
+- [x] Routing
 - [ ] Error handling
+- [ ] Make more modular
