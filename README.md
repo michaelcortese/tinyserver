@@ -4,7 +4,7 @@ Hello, this is my (currently) singlethreaded webserver in rust made to learn and
 no dependencies btw :)
 
 ## Build Instructions:
-Ensure Rust and Cargo are installed on your system
+Ensure [Rust and Cargo](https://rustup.rs/) are installed on your system
 
 Clone repo:
 
