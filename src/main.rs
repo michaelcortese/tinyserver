@@ -1,8 +1,10 @@
 use std::fs;
+use std::thread;
 use std::{
     io::{Read, Write},
     net::{Shutdown, TcpListener, TcpStream},
 };
+
 #[derive(Clone)]
 enum HttpResponseType {
     Processing,
@@ -70,7 +72,11 @@ fn main() -> std::io::Result<()> {
     for stream in listener.incoming() {
         match stream {
             Ok(mut connection) => {
-                handle_connection(&mut connection)?;
+                thread::spawn(move || {
+                    if let Err(e) = handle_connection(&mut connection) {
+                        eprintln!("Err {}", e)
+                    }
+                });
             }
 
             Err(err) => {
@@ -92,8 +98,12 @@ fn handle_connection(connection: &mut TcpStream) -> std::io::Result<()> {
         match http {
             "GET" => {
                 let mut http_res = HttpResponse::from({
-                    let route = res.next().unwrap_or("404.html");
-                    format!("www/{}", route.trim_start_matches("/"))
+                    let mut route = res.next().unwrap_or("404.html");
+                    route = route.trim_start_matches("/");
+                    if route == "" {
+                        route = "index.html"
+                    }
+                    format!("www/{}", route)
                 });
                 connection.write_all(http_res.assemble().as_bytes())?;
                 connection.flush()?;
