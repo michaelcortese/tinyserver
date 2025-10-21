@@ -91,9 +91,14 @@ fn handle_connection(connection: &mut TcpStream) -> std::io::Result<()> {
     if let Some(http) = res.next() {
         match http {
             "GET" => {
+                
                 let mut http_res = HttpResponse::from({
-                    let route = res.next().unwrap_or("404.html");
-                    format!("www/{}", route.trim_start_matches("/"))
+                    let mut route = res.next().unwrap_or("404.html");
+                    route = route.trim_start_matches("/");
+                    if route == "" {
+                        route = "index.html"
+                    }
+                    format!("www/{}", route)
                 });
                 connection.write_all(http_res.assemble().as_bytes())?;
                 connection.flush()?;
