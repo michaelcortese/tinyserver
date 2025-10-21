@@ -1,10 +1,11 @@
-use std::{fs};
+use std::fs;
 use std::{
     io::{Read, Write},
     net::{Shutdown, TcpListener, TcpStream},
 };
 #[derive(Clone)]
 enum HttpResponseType {
+    Processing,
     Ok = 200,
     NotFound = 404,
 }
@@ -14,14 +15,15 @@ struct HttpResponse {
 }
 
 impl HttpResponse {
-    fn from(response: HttpResponseType, route: String) -> Self {
+    fn from(route: String) -> Self {
         Self {
-            res_type: response.clone(),
+            res_type: HttpResponseType::Processing,
             route: route,
         }
     }
 
     pub fn assemble(&mut self) -> String {
+        self.res_type = HttpResponseType::Ok;
         let page = fs::read_to_string(&self.route).unwrap_or_else(|_| {
             {
                 self.res_type = HttpResponseType::NotFound;
@@ -42,6 +44,15 @@ impl HttpResponse {
             ),
             HttpResponseType::Ok => format!(
                 "HTTP/1.1 200 OK\r\n\
+             Content-Length: {}\r\n\
+             Content-Type: text/html; charset=utf-8\r\n\
+             Connection: close\r\n\
+             \r\n{}",
+                &page.as_bytes().len(),
+                page
+            ),
+            _ => format!(
+                "HTTP/1.1 500 Internal Server Error\r\n\
              Content-Length: {}\r\n\
              Content-Type: text/html; charset=utf-8\r\n\
              Connection: close\r\n\
@@ -80,19 +91,19 @@ fn handle_connection(connection: &mut TcpStream) -> std::io::Result<()> {
     if let Some(http) = res.next() {
         match http {
             "GET" => {
-                let mut http_res = HttpResponse::from(
-                    HttpResponseType::Ok,
-                    format!("www/{}", res.next().unwrap().trim_start_matches("/")),
-                );
+                let mut http_res = HttpResponse::from({
+                    let route = res.next().unwrap_or("404.html");
+                    format!("www/{}", route.trim_start_matches("/"))
+                });
                 connection.write_all(http_res.assemble().as_bytes())?;
                 connection.flush()?;
                 connection.shutdown(Shutdown::Both)?;
             }
             _ => {
-                let mut http_res = HttpResponse::from(
-                    HttpResponseType::Ok,
-                    format!("www/{}", res.next().unwrap().trim_start_matches("/")),
-                );
+                let mut http_res = HttpResponse::from(format!(
+                    "www/{}",
+                    res.next().unwrap().trim_start_matches("/")
+                ));
                 connection.write_all(http_res.assemble().as_bytes())?;
                 connection.flush()?;
                 connection.shutdown(Shutdown::Both)?;
