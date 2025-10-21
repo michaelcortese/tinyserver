@@ -3,6 +3,19 @@ Hello, this is my (currently) singlethreaded webserver in rust made to learn and
 
 no dependencies btw :)
 
+## Build Instructions:
+Ensure Rust and Cargo are installed on your system
+
+Clone repo:
+
+```zsh
+git clone https://github.com/michaelcortese/tinyserver.git
+```
+Build and run with cargo:
+```zsh
+cargo run
+```
+
 ## Todo
 - [ ] Multithreading
 - [x] Routing
